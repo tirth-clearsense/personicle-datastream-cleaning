@@ -1,0 +1,8 @@
+numpy
+pandas
+sqlalchemy
+Flask
+gunicorn
+pandarallel
+json
+time
