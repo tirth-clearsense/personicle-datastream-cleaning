@@ -30,40 +30,40 @@ from db_connection import *
 import json,time
 from pandarallel import pandarallel
 pandarallel.initialize()
+from producer.send_datastreams_to_azure import datastream_producer
+pd.set_option('display.max_rows', 500)
+pd.set_option('display.max_columns', 500)
 
 
 app = Flask(__name__)
 #api = Api(app)
 
 
-@app.route('/',methods=['GET'])
-
-def home_page():
-    
-    data_set={'Page':'Home','Message':'Succesful load','Timestamp':time.time()}
-    json_dump= json.dumps(data_set)
-    
-    return json_dump
 
 
-
-@app.route('/user/',methods=['GET'])
+@app.route('/fetch_data/',methods=['GET'])
 
 def request_page():
     
-    tblname  = request.args.get('tblname', type=str ,default='')
+    user  = request.args.get('user',type=str , default='')
+    tblname  = request.args.get('data', type=str ,default='')
     source  = request.args.get('source',type=str , default='')
-    ts  = request.args.get('ts',type=str , default='')
-    te  = request.args.get('te',type=str , default='')
+    
+    sources = source.split(";") if source is not None else None
+    #print("sources:",sources)
+    ts  = request.args.get('starttime',type=str , default='')
+    te  = request.args.get('endtime',type=str , default='')
     freq  = request.args.get('freq',type=str , default='')
 
     query_hr='select * from '+ tblname
     
     
     hr= sqlio.read_sql_query(query_hr,engine)
-    hr=hr[(hr.source==source) &(pd.to_datetime(hr.timestamp)>=ts)&(pd.to_datetime(hr.timestamp)<=te)].copy()
+    hr['source']=np.where(pd.to_datetime(hr.timestamp)=='2021-12-09','connect','google-fit')
     
-    # pd.to_datetime(hr.timestamp)
+   
+    hr=hr[(hr.individual_id==user)&(hr.source.isin(sources))&(pd.to_datetime(hr.timestamp)>=ts)&(pd.to_datetime(hr.timestamp)<=te)].copy()
+    
      
     hr['startdate']=hr['timestamp']-pd.Timedelta('1min')
     hr.rename(columns={'timestamp':'enddate','source':'sourcename'},inplace=True)
@@ -76,7 +76,7 @@ def request_page():
     hr.rename(columns={'index':'ind'},inplace=True)
     hr['diff_seconds'] = hr['enddate'] - hr['startdate']
     hr['diff_seconds']=hr['diff_seconds']/np.timedelta64(1,'s')
-    hr['weight']=hr['diff_seconds']**(-1)
+    hr['weight']=np.round(hr['diff_seconds']**(-1),4)
     hr.weight.fillna(1,inplace=True)
     
          
@@ -90,41 +90,59 @@ def request_page():
     hr.columns = list(map("_".join, hr.columns))
     hr.rename(columns={'individual_id_':'individual_id','startdate_':'startdate','enddate_':'enddate'},inplace=True)
     hr.fillna(0,inplace=True)
+       
     
-    
-    
-    # hr['startdate']=hr.parallel_apply(lambda d:pd1.date_range(d['startdate'],d['enddate']-pd1.Timedelta('1min') if d['diff_seconds'] > 0 else d['startdate']),axis=1)
-    # hr=hr.explode('startdate')
-    # hr['enddate']=(hr['startdate']+pd1.Timedelta('1min')).dt.ceil('1min')
-    # hr['wt_value']=hr['weight']*hr['value']
-    # hr=hr.pivot_table(index=['individual_id','startdate','enddate'],columns='sourcename',values=['wt_value','weight']).reset_index()
-    # hr.columns = list(map("_".join, hr.columns))
-    # hr.rename(columns={'individual_id_':'individual_id','startdate_':'startdate','enddate_':'enddate'},inplace=True)
-    # hr.fillna(0,inplace=True)
     
     hr['result_stream']=np.round((hr.loc[:,hr.columns.str.startswith("wt_value")].sum(axis=1))/(hr.loc[:,hr.columns.str.startswith("weight")].sum(axis=1)))
 
 
-
-       
     for col in ('startdate','enddate'):    
          hr[col] = hr[col].dt.strftime('%Y-%m-%d %H:%M:%S')
    
     
-    hr=hr.head(5).copy()
+    hr=hr.loc[:,~hr.columns.str.startswith('wt_value')].copy()
     
+    
+    
+    
+    hr=pd.melt(hr, id_vars=['individual_id','startdate','enddate','result_stream'], 
+                  value_vars=hr.columns[hr.columns.str.contains('weight')]).copy()
+    
+    
+    hr=hr[hr.value!=0]
+    hr['final_source']=hr['variable'].astype(str)+':' +hr['value'].astype(str)
+    
+    hr.drop(columns=['variable','value'],inplace=True)
+    
+    hr=hr.groupby(['individual_id','startdate','enddate','result_stream'])['final_source'].apply(';'.join).reset_index()
+    
+    display(hr.head(6))
+
+    
+    print("hr dim:", hr.shape)
+    data=hr[['individual_id','startdate','enddate','final_source','result_stream']].copy()
+    
+    data.rename(columns={'result_stream':'value','final_source':'Personicle'},inplace=True)
+
+
+    data['Personicle'] = data['Personicle'].str.replace('weight_','')
     #data=hr.to_dict('index')
-    data=hr.to_json(orient='records')
+    data=data.to_json(orient='records')
+    total_data_points=len(data)
+    print(total_data_points)
     
-    #data= hr.to_json()
-    #data=hr.to_dict()
     
-    #data1=[]
-    #for i in data:
-    #    data1.append(i)
+   
+    try:
+        datastream_producer(data)
+    except Exception as e:
     
-    print(hr)
-    #print(data1)
+            #logging.info("Total data points added for source {}: {}".format(datasource, total_data_points))
+        logging.info("Total data points added for source {}: {}".format(data, total_data_points))
+        logging.error(traceback.format_exc())
+           
+    
+    
     return data
 
 if __name__ == '__main__':

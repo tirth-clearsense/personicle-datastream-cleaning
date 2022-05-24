@@ -31,6 +31,7 @@ else:
     OKTA_CONFIG = config_object["OKTA"]
     PERSONICLE_AUTH_API = config_object["PERSONICLE_AUTH_SERVICE"]
     PERSONICLE_SCHEMA_API = config_object["PERSONICLE_DATA_DICTIONARY"]
+    EVENTHUB_CONFIG=config_object["EVENTHUB"]
     
     # DB_CONFIG = {
     #     "USERNAME" : os.getenv('USERNAME'),
