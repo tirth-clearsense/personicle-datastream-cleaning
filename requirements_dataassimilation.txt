@@ -6,3 +6,8 @@ gunicorn
 pandarallel
 datetime
 json5
+psycopg2
+azure-core==1.23.0
+azure-eventhub==5.7.0
+azure-identity==1.8.0
+azure-schemaregistry==1.0.0

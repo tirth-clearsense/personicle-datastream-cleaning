@@ -1,6 +1,6 @@
 import sqlalchemy
-import databases
-from pydantic import BaseModel
+# import databases
+# from pydantic import BaseModel
 from typing import List, Optional, Text
 from datetime import datetime, timezone
 from sqlalchemy.ext.declarative import declarative_base
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 # DATABASE_URL = 'postgresql://{}:{}@{}/{}?sslmode={}'.format("tirth", "password", "localhost", "personicletest", 'prefer')
 DATABASE_URL = 'postgresql://{}:{}@{}/{}?sslmode={}'.format(DB_CONFIG['USERNAME'], DB_CONFIG['PASSWORD'],DB_CONFIG['HOST'],DB_CONFIG['NAME'], 'prefer')
-database = databases.Database(DATABASE_URL)
+# database = databases.Database(DATABASE_URL)
 
 metadata = sqlalchemy.MetaData()
 # engine = sqlalchemy.create_engine("postgresql://{username}:{password}@{dbhost}/{dbname}".format(username=database['USERNAME'], password=database['PASSWORD'],
