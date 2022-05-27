@@ -4,5 +4,5 @@ sqlalchemy
 Flask
 gunicorn
 pandarallel
-json5
 datetime
+json5
