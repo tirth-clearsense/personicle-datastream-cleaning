@@ -13,7 +13,7 @@ Created on Tue May 17 02:20:57 2022
 import os
 import numpy as np
 import pandas as pd
-from flask import Flask
+from flask import Flask, Response
 from flask import request
 from sqlalchemy import select
 import pandas.io.sql as sqlio
@@ -28,6 +28,10 @@ from producer.send_datastreams_to_azure import datastream_producer
 pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 app = Flask(__name__)
+
+@app.route("/")
+def test_application():
+    return Response("Data cleaning service up")
 
 @app.route('/fetch_data/',methods=['GET'])
 def request_page():
