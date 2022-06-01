@@ -139,7 +139,7 @@ def request_page():
         "individual_id": data['individual_id'].iloc[0],
         "source": "Personicle",
         "unit": personicle_stream_info['Unit'],
-        "dataPoints": json.loads(   [["timestamp", "value"]].to_json(orient='records'))
+        "dataPoints": json.loads(data[["timestamp", "value"]].to_json(orient='records'))
     }
 
     validation_response = validate_personicle_data_packet(data_packet)
@@ -174,7 +174,6 @@ if __name__ == '__main__':
     # app.run(port=7777, debug=True)
     os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
     print("running server on {}:{}".format(DATA_SYNC_CONFIG['HOST_URL'], DATA_SYNC_CONFIG['HOST_PORT']))
-    app.run(DATA_SYNC_CONFIG['HOST_URL'], port=DATA_SYNC_CONFIG['HOST_PORT'], debug=True)#, ssl_context='adhoc')
-
+    app.run(DATA_SYNC_CONFIG['HOST_URL'], port=DATA_SYNC_CONFIG['HOST_PORT'], debug=True)#, ssl_context='adho
 
 
