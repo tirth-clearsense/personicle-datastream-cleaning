@@ -110,7 +110,7 @@ def request_page():
     hr['result_stream']=np.round((hr.loc[:,hr.columns.str.startswith("wt_value")].sum(axis=1))/(hr.loc[:,hr.columns.str.startswith("weight")].sum(axis=1)))
 
     for col in ('startdate','enddate'):    
-         hr[col] = hr[col].dt.strftime('%Y-%m-%d %H:%M:%S')
+         hr[col] = hr[col].dt.strftime('%Y-%m-%d %H:%M:%S.%f')
     
     hr=hr.loc[:,~hr.columns.str.startswith('wt_value')].copy()
     
@@ -146,7 +146,8 @@ def request_page():
         "unit": personicle_stream_info['Unit'],
         "dataPoints": json.loads(data[["timestamp", "value"]].to_json(orient='records'))
     }
-
+    print("hello")
+    print(data_packet)
     validation_response = validate_personicle_data_packet(data_packet)
     if not validation_response:
         return jsonify({'message': 'incorrectly formatted data packet'})
@@ -178,8 +179,8 @@ def request_page():
 if __name__ == '__main__':
     #  app.run(port=7777, debug=True)
 
-    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
-    print("running server on {}:{}".format(DATA_SYNC_CONFIG['HOST_URL'], DATA_SYNC_CONFIG['HOST_PORT']))
+    # # os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+    # # print("running server on {}:{}".format(DATA_SYNC_CONFIG['HOST_URL'], DATA_SYNC_CONFIG['HOST_PORT']))
     app.run(DATA_SYNC_CONFIG['HOST_URL'], port=DATA_SYNC_CONFIG['HOST_PORT'], debug=True)#, ssl_context='adho
 
 
