@@ -35,7 +35,7 @@ def find_personicle_datastream(personicle_data_type):
     stream_information = requests.get(PERSONICLE_SCHEMA_API['MATCH_DICTIONARY_ENDPOINT'], params={
             "data_type": "datastream",
             "stream_name": personicle_data_type
-        }, verify=False)
+        })
         
     # personicle_data_description = find_datastream(personicle_data_type)
     if stream_information.status_code != requests.codes.ok:
@@ -50,7 +50,7 @@ def validate_personicle_data_packet(data_packet):
     print("Validating data packet: {}".format(data_packet))
     stream_information = requests.post(PERSONICLE_SCHEMA_API['SCHEMA_VALIDATION_ENDPOINT'], params={
             "data_type": "datastream"
-        }, json=data_packet, verify=False)
+        }, json=data_packet)
     print(stream_information.content)
     validation_response = stream_information.json()
     return validation_response['schema_check']
