@@ -38,8 +38,8 @@ def find_personicle_datastream(personicle_data_type):
     stream_information = requests.get(PERSONICLE_SCHEMA_API['MATCH_DICTIONARY_ENDPOINT'], params={
             "data_type": "datastream",
             "stream_name": personicle_data_type
-        }, verify=False)
-        
+        })
+    print(stream_information)
     # personicle_data_description = find_datastream(personicle_data_type)
     if stream_information.status_code != requests.codes.ok:
         logging.warn("Data type {} not present in personicle data dictionary".format(personicle_data_type))
@@ -53,7 +53,7 @@ def validate_personicle_data_packet(data_packet):
     print("Validating data packet: {}".format(data_packet))
     stream_information = requests.post(PERSONICLE_SCHEMA_API['SCHEMA_VALIDATION_ENDPOINT'], params={
             "data_type": "datastream"
-        }, json=data_packet, verify=False)
+        }, json=data_packet)
     print(stream_information.content)
     validation_response = stream_information.json()
     return validation_response['schema_check']
@@ -139,7 +139,7 @@ def request_page():
         "individual_id": data['individual_id'].iloc[0],
         "source": "Personicle",
         "unit": personicle_stream_info['Unit'],
-        "dataPoints": json.loads(data[["timestamp", "value"]].to_json(orient='records'))
+        "dataPoints": json.loads(   [["timestamp", "value"]].to_json(orient='records'))
     }
 
     validation_response = validate_personicle_data_packet(data_packet)
@@ -171,7 +171,10 @@ def request_page():
         return jsonify({'message': 'Error while sending data packet; {}'.format(e)})
 
 if __name__ == '__main__':
-     app.run(port=7777, debug=True)
+    # app.run(port=7777, debug=True)
+    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+    print("running server on {}:{}".format(DATA_SYNC_CONFIG['HOST_URL'], DATA_SYNC_CONFIG['HOST_PORT']))
+    app.run(DATA_SYNC_CONFIG['HOST_URL'], port=DATA_SYNC_CONFIG['HOST_PORT'], debug=True)#, ssl_context='adhoc')
 
 
 
